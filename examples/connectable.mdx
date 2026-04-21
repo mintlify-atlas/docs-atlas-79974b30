@@ -1,0 +1,212 @@
+---
+title: "Connecting multiple charts with group in uni-echarts"
+description: "Link two or more charts so their tooltips and data zoom controls stay in sync by assigning the same group name and calling echarts.connect."
+---
+
+ECharts supports linking multiple chart instances into a group so that interactions on one chart — such as hovering to show a tooltip or dragging a data zoom slider — are mirrored on all other charts in the same group. Assign the same string to the `group` prop on each `<uni-echarts>` component, then call `echarts.connect(groupName)` to activate the link. Call `echarts.disconnect(groupName)` to decouple them.
+
+## Complete example
+
+<CodeGroup>
+
+```vue index.vue (script setup)
+<script lang="ts" setup>
+import type { ScatterSeriesOption } from "echarts/charts";
+import { ScatterChart } from "echarts/charts";
+import type {
+  GridComponentOption,
+  LegendComponentOption,
+  TooltipComponentOption,
+  VisualMapComponentOption
+} from "echarts/components";
+import {
+  GridComponent,
+  LegendComponent,
+  TooltipComponent,
+  VisualMapComponent
+} from "echarts/components";
+import type { ComposeOption } from "echarts/core";
+import * as echarts from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import { cloneDeep } from "es-toolkit";
+import { GLOBAL_OPTION } from "../echarts";
+
+type EChartsOption = ComposeOption<
+  | LegendComponentOption
+  | GridComponentOption
+  | TooltipComponentOption
+  | VisualMapComponentOption
+  | ScatterSeriesOption
+>;
+
+echarts.use([
+  LegendComponent,
+  GridComponent,
+  TooltipComponent,
+  VisualMapComponent,
+  ScatterChart,
+  CanvasRenderer
+]);
+
+const option: EChartsOption = {
+  ...GLOBAL_OPTION,
+  legend: {
+    top: 10,
+    left: "center",
+    data: ["Scatter"]
+  },
+  grid: {
+    top: 60,
+    right: 70,
+    bottom: 10,
+    left: 10,
+    outerBoundsMode: "same",
+    outerBoundsContain: "axisLabel"
+  },
+  tooltip: {
+    formatter: "{c}",
+    textStyle: {
+      // #ifdef MP-WEIXIN
+      textShadowBlur: 1
+      // #endif
+    }
+  },
+  xAxis: { type: "value", splitLine: { show: false } },
+  yAxis: { type: "value", splitLine: { show: false } },
+  visualMap: [
+    {
+      realtime: false,
+      right: 10,
+      bottom: 10,
+      selectedMode: "multiple",
+      dimension: 2,
+      selected: {},
+      min: 0,
+      max: 18,
+      precision: 0,
+      splitNumber: 0,
+      calculable: true
+    }
+  ],
+  series: [
+    {
+      type: "scatter",
+      name: "Scatter",
+      symbolSize: 30,
+      data: getData()
+    }
+  ]
+};
+
+const option1 = ref(cloneDeep(option));
+const option2 = ref(cloneDeep(option));
+
+function getData() {
+  const data: [number, number, number, number][] = [];
+
+  for (let i = 0; i < 16; i += 1) {
+    data.push([
+      Math.random() * 5,
+      Math.random() * 4,
+      Math.random() * 12,
+      Math.round(Math.random() * 5)
+    ]);
+  }
+
+  return data;
+}
+
+const connected = shallowRef(true);
+
+watchEffect(() => {
+  if (connected.value) {
+    echarts.connect("radiance");
+  } else {
+    echarts.disconnect("radiance");
+  }
+});
+</script>
+```
+
+```vue index.vue (template)
+<template>
+  <uni-echarts
+    custom-class="h-60"
+    :option="option1"
+    group="radiance"
+    autoresize
+  ></uni-echarts>
+
+  <uni-echarts
+    custom-class="h-60"
+    :option="option2"
+    group="radiance"
+    autoresize
+  ></uni-echarts>
+</template>
+```
+
+</CodeGroup>
+
+## How it works
+
+### Assigning a group
+
+Give each chart the same `group` string. The value is arbitrary — use something meaningful to your feature:
+
+```vue
+<uni-echarts group="radiance" :option="option1"></uni-echarts>
+<uni-echarts group="radiance" :option="option2"></uni-echarts>
+```
+
+This sets the underlying `echartsInstance.group` property on each chart.
+
+### Connecting and disconnecting
+
+Call `echarts.connect` with the group name to activate synchronized interactions:
+
+```ts
+import * as echarts from "echarts/core";
+
+echarts.connect("radiance");
+```
+
+Call `echarts.disconnect` to break the link:
+
+```ts
+echarts.disconnect("radiance");
+```
+
+In this example, a reactive boolean drives the connection state via `watchEffect`:
+
+```ts
+const connected = shallowRef(true);
+
+watchEffect(() => {
+  if (connected.value) {
+    echarts.connect("radiance");
+  } else {
+    echarts.disconnect("radiance");
+  }
+});
+```
+
+<Note>
+  `echarts.connect` and `echarts.disconnect` are static methods on the ECharts core object. Import `echarts` from `echarts/core` (not from `uni-echarts`) to call them.
+</Note>
+
+### Deep cloning shared option objects
+
+Both charts share the same base option structure. Use `cloneDeep` (or `structuredClone`) to give each chart its own independent copy — otherwise mutations to one chart's option would affect the other:
+
+```ts
+import { cloneDeep } from "es-toolkit";
+
+const option1 = ref(cloneDeep(option));
+const option2 = ref(cloneDeep(option));
+```
+
+## Related
+
+- [Component props and exposes](/api/component) — `group` prop reference
+- [ECharts connect API](https://echarts.apache.org/en/api.html#echarts.connect) — Official documentation for `echarts.connect`

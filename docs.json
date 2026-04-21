@@ -1,122 +1,76 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Uni ECharts",
+  "theme": "palm",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#60cf5d",
+    "light": "#ace4b4"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "https://media.brand.dev/d85de2ab-c965-499a-b787-45fed55a0f96.png",
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/xiaohe0601/uni-echarts"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/xiaohe0601/uni-echarts"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Guide",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Getting Started",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "introduction",
+              "quickstart"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Configuration",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "guide/echarts",
+              "guide/provide"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Examples",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "examples/basic",
+              "examples/async-data",
+              "examples/manual-update",
+              "examples/builtin-theme",
+              "examples/connectable",
+              "examples/export-image",
+              "examples/popup"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Help",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "guide/faq",
+              "guide/migration",
+              "guide/changelog"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "API",
             "pages": [
-              "api-reference/introduction"
-            ]
-          },
-          {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api/component",
+              "api/functions"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

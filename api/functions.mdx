@@ -1,0 +1,372 @@
+---
+title: "Uni ECharts provide functions reference"
+description: "Reference for the six provide/inject functions that configure ECharts globally — theme, option, init options, update options, and loading options."
+---
+
+The provide functions use Vue's [provide/inject](https://vuejs.org/guide/components/provide-inject.html) pattern to push configuration down to `<uni-echarts>` components anywhere in the subtree. Call them in a parent component (or at the app root) instead of passing the same prop to every chart individually.
+
+<Note>
+  For a conceptual explanation of how provide/inject works with Uni ECharts, see [provide configuration](/guide/provide).
+</Note>
+
+<Note>
+  All injection values accept **`MaybeRefOrGetter<T | null>`** — a literal value, a Vue `ref`, or a getter function. Uni ECharts resolves the value internally with Vue's `toValue()`, so injected configuration stays reactive.
+</Note>
+
+---
+
+## `provideEcharts`
+
+Provides a custom ECharts core instance to all descendant charts. Use this when you need to inject a tree-shaken ECharts build instead of a full bundle.
+
+```ts
+import type * as Echarts from "echarts/core";
+
+export type CoreEcharts = typeof Echarts;
+
+declare function provideEcharts(echarts: CoreEcharts): void;
+```
+
+<Tabs>
+  <Tab title="npm">
+    ```ts
+    import { provideEcharts } from "uni-echarts/shared";
+    ```
+  </Tab>
+  <Tab title="uni-modules">
+    ```ts
+    import { provideEcharts } from "@/uni_modules/xiaohe-echarts";
+    ```
+  </Tab>
+</Tabs>
+
+**Usage**
+
+```vue
+<script lang="ts" setup>
+import * as echarts from "echarts/core";
+import { BarChart } from "echarts/charts";
+import { CanvasRenderer } from "echarts/renderers";
+import { provideEcharts } from "uni-echarts/shared";
+
+echarts.use([BarChart, CanvasRenderer]);
+
+provideEcharts(echarts);
+</script>
+```
+
+---
+
+## `provideEchartsTheme`
+
+Provides a default theme to all descendant charts. The value is passed as the second argument to `echarts.init`.
+
+```ts
+import type { init } from "echarts/core";
+
+type NullableValue<T> = T | null;
+type Injection<T> = MaybeRefOrGetter<NullableValue<T>>;
+
+type InitType = typeof init;
+type InitParameters = Parameters<InitType>;
+
+type ChartTheme = NonNullable<InitParameters[1]>;
+type ChartThemeInjection = Injection<ChartTheme>;
+
+declare function provideEchartsTheme(value: ChartThemeInjection): void;
+```
+
+<Tabs>
+  <Tab title="npm">
+    ```ts
+    import { provideEchartsTheme } from "uni-echarts/shared";
+    ```
+  </Tab>
+  <Tab title="uni-modules">
+    ```ts
+    import { provideEchartsTheme } from "@/uni_modules/xiaohe-echarts";
+    ```
+  </Tab>
+</Tabs>
+
+**Usage**
+
+```vue
+<script lang="ts" setup>
+import { provideEchartsTheme } from "uni-echarts/shared";
+
+// pass a registered theme name or a theme config object
+provideEchartsTheme("dark");
+</script>
+```
+
+Individual charts can override the injected theme with the `theme` prop.
+
+---
+
+## `provideEchartsOption`
+
+Provides a base option object that is merged into every descendant chart's configuration. Accepts an optional `key` to target only charts that declare a matching `option-key` prop.
+
+```ts
+import type { EChartsType } from "echarts/core";
+
+type NullableValue<T> = T | null;
+type Injection<T> = MaybeRefOrGetter<NullableValue<T>>;
+
+type SetOptionType = EChartsType["setOption"];
+
+type ChartOption = Parameters<SetOptionType>[0];
+type ChartOptionInjection = Injection<ChartOption>;
+
+// Broadcast to all descendant charts
+declare function provideEchartsOption(value: ChartOptionInjection): void;
+
+// Target only charts whose `option-key` prop matches `key`
+declare function provideEchartsOption(key: string, value: ChartOptionInjection): void;
+
+// Combined overload signature
+declare function provideEchartsOption(
+  keyOrValue: string | ChartOptionInjection,
+  value?: ChartOptionInjection
+): void;
+```
+
+<Tabs>
+  <Tab title="npm">
+    ```ts
+    import { provideEchartsOption } from "uni-echarts/shared";
+    ```
+  </Tab>
+  <Tab title="uni-modules">
+    ```ts
+    import { provideEchartsOption } from "@/uni_modules/xiaohe-echarts";
+    ```
+  </Tab>
+</Tabs>
+
+**Usage — broadcast to all charts**
+
+```vue
+<script lang="ts" setup>
+import { provideEchartsOption } from "uni-echarts/shared";
+
+provideEchartsOption({
+  backgroundColor: "#1a1a2e",
+  textStyle: { fontFamily: "Inter, sans-serif" },
+});
+</script>
+```
+
+**Usage — targeted injection**
+
+```vue
+<!-- Parent -->
+<script lang="ts" setup>
+import { provideEchartsOption } from "uni-echarts/shared";
+
+provideEchartsOption("sales-chart", {
+  color: ["#60cf5d", "#ace4b4"],
+});
+</script>
+
+<!-- Child -->
+<template>
+  <uni-echarts option-key="sales-chart" :option="option" />
+</template>
+```
+
+---
+
+## `provideEchartsInitOptions`
+
+Provides default init options to all descendant charts. The value is passed as the third argument to `echarts.init`.
+
+```ts
+import type { init } from "echarts/core";
+
+type NullableValue<T> = T | null;
+type Injection<T> = MaybeRefOrGetter<NullableValue<T>>;
+
+type InitType = typeof init;
+type InitParameters = Parameters<InitType>;
+
+type InitOptions = NonNullable<InitParameters[2]>;
+type InitOptionsInjection = Injection<InitOptions>;
+
+declare function provideEchartsInitOptions(value: InitOptionsInjection): void;
+```
+
+<Tabs>
+  <Tab title="npm">
+    ```ts
+    import { provideEchartsInitOptions } from "uni-echarts/shared";
+    ```
+  </Tab>
+  <Tab title="uni-modules">
+    ```ts
+    import { provideEchartsInitOptions } from "@/uni_modules/xiaohe-echarts";
+    ```
+  </Tab>
+</Tabs>
+
+**Usage**
+
+```vue
+<script lang="ts" setup>
+import { provideEchartsInitOptions } from "uni-echarts/shared";
+
+// Example: set the locale for all descendant charts
+provideEchartsInitOptions({ locale: "EN" });
+</script>
+```
+
+<Warning>
+  The SVG renderer is **not supported** in uni-app. Do not pass `renderer: "svg"` — only Canvas rendering works across Web, Mini Programs, and APP.
+</Warning>
+
+---
+
+## `provideEchartsUpdateOptions`
+
+Provides default `setOption` call options to all descendant charts. These are applied every time a chart calls `setOption` in response to an `option` prop change.
+
+```ts
+type NullableValue<T> = T | null;
+type Injection<T> = MaybeRefOrGetter<NullableValue<T>>;
+
+// SetOptionOpts is the second parameter type of echartsInstance.setOption
+type UpdateOptions = SetOptionOpts;
+type UpdateOptionsInjection = Injection<UpdateOptions>;
+
+declare function provideEchartsUpdateOptions(value: UpdateOptionsInjection): void;
+```
+
+<Tabs>
+  <Tab title="npm">
+    ```ts
+    import { provideEchartsUpdateOptions } from "uni-echarts/shared";
+    ```
+  </Tab>
+  <Tab title="uni-modules">
+    ```ts
+    import { provideEchartsUpdateOptions } from "@/uni_modules/xiaohe-echarts";
+    ```
+  </Tab>
+</Tabs>
+
+**Usage**
+
+```vue
+<script lang="ts" setup>
+import { provideEchartsUpdateOptions } from "uni-echarts/shared";
+
+provideEchartsUpdateOptions({ notMerge: true, lazyUpdate: true });
+</script>
+```
+
+---
+
+## `provideEchartsLoadingOptions`
+
+Provides default loading animation options to all descendant charts. Applied when a chart's `loading` prop is `true`.
+
+```ts
+type NullableValue<T> = T | null;
+type Injection<T> = MaybeRefOrGetter<NullableValue<T>>;
+
+interface LoadingOptions {
+  text?: string;
+  textColor?: string;
+  fontSize?: number | string;
+  fontWeight?: number | string;
+  fontStyle?: string;
+  fontFamily?: string;
+  maskColor?: string;
+  showSpinner?: boolean;
+  color?: string;
+  spinnerRadius?: number;
+  lineWidth?: number;
+  zlevel?: number;
+}
+
+type LoadingOptionsInjection = Injection<LoadingOptions>;
+
+declare function provideEchartsLoadingOptions(value: LoadingOptionsInjection): void;
+```
+
+<Tabs>
+  <Tab title="npm">
+    ```ts
+    import { provideEchartsLoadingOptions } from "uni-echarts/shared";
+    ```
+  </Tab>
+  <Tab title="uni-modules">
+    ```ts
+    import { provideEchartsLoadingOptions } from "@/uni_modules/xiaohe-echarts";
+    ```
+  </Tab>
+</Tabs>
+
+**Usage**
+
+```vue
+<script lang="ts" setup>
+import { provideEchartsLoadingOptions } from "uni-echarts/shared";
+
+provideEchartsLoadingOptions({
+  text: "Loading…",
+  color: "#60cf5d",
+  maskColor: "rgba(0, 0, 0, 0.4)",
+});
+</script>
+```
+
+---
+
+## Options API constants
+
+When using the Options API, use the exported injection keys directly with `inject`:
+
+```ts
+import { ECHARTS_KEY, THEME_KEY } from "uni-echarts/shared";
+```
+
+| Constant | Description |
+|----------|-------------|
+| `ECHARTS_KEY` | Injection key for the ECharts core instance provided by `provideEcharts` |
+| `THEME_KEY` | Injection key for the theme provided by `provideEchartsTheme` |
+
+---
+
+## `UniEchartsInst` type
+
+Use `UniEchartsInst` to type a template ref pointing at a `<uni-echarts>` component:
+
+```vue
+<template>
+  <uni-echarts ref="chartEl" :option="option" />
+</template>
+
+<script lang="ts" setup>
+import type { UniEchartsInst } from "uni-echarts/shared";
+import { shallowRef } from "vue";
+
+const chartEl = shallowRef<UniEchartsInst | null>(null);
+</script>
+```
+
+<Tabs>
+  <Tab title="npm">
+    ```ts
+    import type { UniEchartsInst } from "uni-echarts/shared";
+    ```
+  </Tab>
+  <Tab title="uni-modules">
+    ```ts
+    import type { UniEchartsInst } from "@/uni_modules/xiaohe-echarts";
+    ```
+  </Tab>
+</Tabs>
+
+For the full list of methods available on the instance, see the [component exposes reference](/api/component#exposes).

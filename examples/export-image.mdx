@@ -1,0 +1,180 @@
+---
+title: "Exporting charts as images in uni-echarts"
+description: "Call toTempFilePath() via a typed template ref to save a chart canvas as a temporary image file on Mini Programs, or getDataURL() on Web."
+---
+
+uni-echarts exposes `toTempFilePath()` on the component instance so you can save the rendered chart canvas to a temporary file path that uni-app APIs such as `uni.previewImage` or `uni.saveImageToPhotosAlbum` can consume. On Web builds, use the standard `getDataURL()` method instead. Both are accessed through a typed template ref using the `UniEchartsInst` type.
+
+## Complete example
+
+<CodeGroup>
+
+```vue index.vue (script setup)
+<script lang="ts" setup>
+import type { LineSeriesOption } from "echarts/charts";
+import { LineChart } from "echarts/charts";
+import type { PolarComponentOption } from "echarts/components";
+import { PolarComponent } from "echarts/components";
+import type { ComposeOption } from "echarts/core";
+import * as echarts from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import type { UniEchartsInst } from "uni-echarts/shared";
+import { GLOBAL_OPTION } from "../echarts";
+
+type EChartsOption = ComposeOption<PolarComponentOption | LineSeriesOption>;
+
+echarts.use([
+  PolarComponent,
+  LineChart,
+  CanvasRenderer
+]);
+
+const chartEl = ref<UniEchartsInst | null>(null);
+
+const option = ref({
+  ...GLOBAL_OPTION,
+  backgroundColor: "#ffffff",
+  polar: {},
+  angleAxis: {
+    type: "value",
+    startAngle: 0
+  },
+  radiusAxis: {},
+  series: [
+    {
+      type: "line",
+      coordinateSystem: "polar",
+      data: getData()
+    }
+  ]
+} satisfies EChartsOption);
+
+function getData() {
+  const data: [number, number][] = [];
+
+  for (let i = 0; i <= 100; i += 1) {
+    const theta = (i / 100) * 360;
+    const r = 5 * (1 + Math.sin((theta / 180) * Math.PI));
+    data.push([r, theta]);
+  }
+
+  return data;
+}
+
+async function saveAsImage() {
+  if (chartEl.value == null) {
+    return;
+  }
+
+  const { tempFilePath } = await chartEl.value.toTempFilePath();
+
+  uni.previewImage({
+    urls: [tempFilePath]
+  });
+}
+</script>
+```
+
+```vue index.vue (template)
+<template>
+  <uni-echarts
+    ref="chartEl"
+    custom-class="h-75"
+    :option="option"
+    autoresize
+  ></uni-echarts>
+
+  <button @click="saveAsImage()">Save as image</button>
+</template>
+```
+
+</CodeGroup>
+
+## How it works
+
+### Typed template ref
+
+Import `UniEchartsInst` to type the ref and get full autocomplete on all exposed methods:
+
+<Tabs>
+  <Tab title="npm">
+    ```ts
+    import type { UniEchartsInst } from "uni-echarts/shared";
+
+    const chartEl = ref<UniEchartsInst | null>(null);
+    ```
+  </Tab>
+  <Tab title="uni-modules">
+    ```ts
+    import type { UniEchartsInst } from "@/uni_modules/xiaohe-echarts";
+
+    const chartEl = ref<UniEchartsInst | null>(null);
+    ```
+  </Tab>
+</Tabs>
+
+Attach the ref to the component in the template:
+
+```vue
+<uni-echarts ref="chartEl" :option="option"></uni-echarts>
+```
+
+### Saving to a temporary file (Mini Programs)
+
+`toTempFilePath()` wraps the uni-app `canvasToTempFilePath` API. You do not need to pass a `canvasId` or `canvas` parameter — the component handles that internally:
+
+```ts
+async function saveAsImage() {
+  if (chartEl.value == null) {
+    return;
+  }
+
+  const { tempFilePath } = await chartEl.value.toTempFilePath();
+
+  // Use the path with any uni-app image API
+  uni.previewImage({ urls: [tempFilePath] });
+}
+```
+
+<Note>
+  `toTempFilePath()` is only available on Mini Program and App builds. On Web, call `getDataURL()` instead (see below).
+</Note>
+
+### Getting a data URL (Web)
+
+For Web targets, call `getDataURL()` which returns a base64-encoded PNG string:
+
+```ts
+async function downloadImage() {
+  if (chartEl.value == null) {
+    return;
+  }
+
+  const dataURL = chartEl.value.getDataURL({
+    type: "png",
+    pixelRatio: 2,
+    backgroundColor: "#ffffff"
+  });
+
+  const link = document.createElement("a");
+  link.download = "chart.png";
+  link.href = dataURL;
+  link.click();
+}
+```
+
+### Setting a background color
+
+The exported image uses a transparent background by default. Set `backgroundColor` in the chart option to ensure the export has a solid background:
+
+```ts
+const option = ref({
+  backgroundColor: "#ffffff",
+  // ...
+});
+```
+
+## Related
+
+- [Component props and exposes](/api/component) — `toTempFilePath`, `getDataURL`, and all other exposed instance methods
+- [ECharts getDataURL](https://echarts.apache.org/en/api.html#echartsInstance.getDataURL) — Full parameter reference for `getDataURL`

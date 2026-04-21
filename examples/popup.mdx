@@ -1,0 +1,173 @@
+---
+title: "Using uni-echarts charts inside popup components"
+description: "Delay chart rendering until after a popup's entrance animation completes so the canvas receives the correct dimensions and renders at the right size."
+---
+
+Most popup and modal components add an entrance animation when they open. If `<uni-echarts>` mounts while the popup is still animating, the canvas measures its container at zero (or the wrong) dimensions and renders incorrectly. The fix is to delay mounting the chart until the animation finishes, then unmount it when the popup closes so the next open starts cleanly.
+
+## The pattern
+
+Combine `v-if` with the popup's open/close lifecycle events:
+
+1. Keep a `render` ref that starts as `false`.
+2. Set `render = true` when the popup's entrance animation completes (`after-enter`).
+3. Set `render = false` when the popup's exit animation completes (`after-leave`).
+4. Wrap `<uni-echarts>` in `v-if="render"`.
+
+This ensures the component only mounts into a fully-visible, correctly-sized container.
+
+## Example with Wot UI Popup
+
+<CodeGroup>
+
+```vue index.vue (script setup)
+<script lang="ts" setup>
+import type { PieSeriesOption } from "echarts/charts";
+import { PieChart } from "echarts/charts";
+import type {
+  DatasetComponentOption,
+  LegendComponentOption,
+  TooltipComponentOption
+} from "echarts/components";
+import {
+  DatasetComponent,
+  LegendComponent,
+  TooltipComponent
+} from "echarts/components";
+import type { ComposeOption } from "echarts/core";
+import * as echarts from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import { GLOBAL_OPTION } from "../echarts";
+
+type EChartsOption = ComposeOption<
+  | LegendComponentOption
+  | TooltipComponentOption
+  | DatasetComponentOption
+  | PieSeriesOption
+>;
+
+echarts.use([
+  LegendComponent,
+  TooltipComponent,
+  DatasetComponent,
+  PieChart,
+  CanvasRenderer
+]);
+
+const visible = ref(false);
+const render = ref(false);
+
+const option = ref({
+  ...GLOBAL_OPTION,
+  legend: {
+    top: 10,
+    left: "center"
+  },
+  tooltip: {
+    trigger: "item",
+    textStyle: {
+      // #ifdef MP-WEIXIN
+      textShadowBlur: 1
+      // #endif
+    }
+  },
+  series: [
+    {
+      type: "pie",
+      radius: ["30%", "52%"],
+      label: {
+        show: false,
+        position: "center"
+      },
+      itemStyle: {
+        borderWidth: 2,
+        borderColor: "#ffffff",
+        borderRadius: 10
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 20
+        }
+      }
+    }
+  ],
+  dataset: {
+    dimensions: ["来源", "数量"],
+    source: [
+      ["Search Engine", 1048],
+      ["Direct", 735],
+      ["Email", 580],
+      ["Union Ads", 484],
+      ["Video Ads", 300]
+    ]
+  }
+} satisfies EChartsOption);
+
+function open() {
+  visible.value = true;
+}
+</script>
+```
+
+```vue index.vue (template)
+<template>
+  <button @click="open()">Open popup</button>
+
+  <wd-popup
+    v-model="visible"
+    @after-enter="render = true"
+    @after-leave="render = false"
+  >
+    <view class="size-80">
+      <uni-echarts
+        v-if="render"
+        custom-class="size-full"
+        :option="option"
+        autoresize
+      ></uni-echarts>
+    </view>
+  </wd-popup>
+</template>
+```
+
+</CodeGroup>
+
+## Why this works
+
+When `v-if="render"` is `false`, Vue removes the `<uni-echarts>` element from the DOM entirely. When `render` becomes `true` (after the animation finishes), Vue creates a fresh component instance that measures its container while it is fully visible and at its final size.
+
+Setting `render = false` on `after-leave` cleans up the ECharts canvas and instance so that reopening the popup creates a new chart from scratch rather than reusing a potentially stale one.
+
+<Tip>
+  The `after-enter` and `after-leave` event names are specific to Wot UI's Popup component. Other UI libraries use different event names for the same lifecycle moments — check your library's documentation for the equivalent events (for example, `opened`/`closed` in some libraries).
+</Tip>
+
+## Adapting to other popup libraries
+
+The same two-ref pattern applies regardless of which popup component you use. Replace `@after-enter` and `@after-leave` with whatever events your library emits after the animation completes:
+
+```vue
+<!-- Generic example — adjust event names to match your library -->
+<your-modal
+  v-model="visible"
+  @opened="render = true"
+  @closed="render = false"
+>
+  <uni-echarts v-if="render" :option="option"></uni-echarts>
+</your-modal>
+```
+
+```ts
+const visible = ref(false);
+const render = ref(false);
+```
+
+<Warning>
+  Do not use `v-show` instead of `v-if` — `v-show` keeps the element mounted, so the chart still measures a zero-size container during the animation. Only `v-if` guarantees the component mounts after the popup is fully open.
+</Warning>
+
+## Related
+
+- [FAQ](/guide/faq) — Full explanation of the popup canvas sizing issue and alternative solutions
+- [Component props and exposes](/api/component) — `visible` prop for deferring updates when a chart is hidden

@@ -1,0 +1,365 @@
+---
+title: "UniEcharts component API reference"
+description: "Complete reference for the uni-echarts component's props, events, slots, and exposed methods for building ECharts-powered charts in uni-app."
+---
+
+The `<uni-echarts>` component is the primary building block of Uni ECharts. It wraps an Apache ECharts instance and exposes a Vue-idiomatic interface — reactive props, declarative events, and template-ref methods — so you can use ECharts inside any uni-app project without manually managing canvas or lifecycle details.
+
+## Attributes
+
+<ParamField body="custom-class" type="any">
+  Custom CSS class applied to the component root element.
+</ParamField>
+
+<ParamField body="custom-style" type="StyleValue">
+  Custom inline style applied to the component root element. Accepts any value valid for Vue's `style` binding.
+</ParamField>
+
+<ParamField body="visible" type="boolean">
+  Controls whether the chart is considered visible. When set to `false`, any option updates triggered while hidden are deferred and applied the next time the component becomes visible. Follows the enclosing page's visibility by default.
+
+  <Note>Available since **v2.4.1**.</Note>
+</ParamField>
+
+<ParamField body="option" type="object">
+  The ECharts [`setOption`](https://echarts.apache.org/en/api.html#echartsInstance.setOption) option object. Updating this prop re-renders the chart reactively.
+</ParamField>
+
+<ParamField body="option-key" type="string">
+  The key used to match a globally provided option injected via [`provideEchartsOption`](/api/functions#provideechartsoption). See [provide option key](/guide/provide) for details.
+</ParamField>
+
+<ParamField body="theme" type="string | object">
+  The theme passed to [`echarts.init`](https://echarts.apache.org/en/api.html#echarts.init). Pass a registered theme name as a string or a raw theme configuration object.
+</ParamField>
+
+<ParamField body="init-options" type="object">
+  Options passed as the third argument to [`echarts.init`](https://echarts.apache.org/en/api.html#echarts.init).
+</ParamField>
+
+<ParamField body="update-options" type="object">
+  Options passed as the second argument to [`echartsInstance.setOption`](https://echarts.apache.org/en/api.html#echartsInstance.setOption) on every update.
+</ParamField>
+
+<ParamField body="group" type="string">
+  Sets [`echartsInstance.group`](https://echarts.apache.org/en/api.html#echartsInstance.group) to connect multiple charts for linked interactions.
+</ParamField>
+
+<ParamField body="manual-update" type="boolean" default="false">
+  When `true`, the chart does not react to changes in the `option` prop automatically. Call the exposed `setOption` method directly to update the chart.
+</ParamField>
+
+<ParamField body="autoresize" type="AutoResize" default="false">
+  **Web only.** When `true`, the chart resizes automatically when its container changes size. Pass an object to configure throttle duration or a resize callback.
+
+  ```ts
+  type AutoResize = boolean | {
+    throttle?: number;
+    onResize?: () => void;
+  };
+  ```
+</ParamField>
+
+<ParamField body="loading" type="boolean" default="false">
+  Shows the ECharts built-in loading animation overlay when `true`.
+</ParamField>
+
+<ParamField body="loading-options" type="object">
+  Options passed to [`echartsInstance.showLoading`](https://echarts.apache.org/en/api.html#echartsInstance.showLoading). Only applied when `loading` is `true`.
+</ParamField>
+
+<ParamField body="canvas-type" type="string" default="2d">
+  Selects the [uni-app canvas type](https://uniapp.dcloud.net.cn/component/canvas.html).
+
+  | Value | Description |
+  |-------|-------------|
+  | `2d` | Modern Canvas 2D API (recommended) |
+  | `legacy` | Legacy canvas API for older platforms |
+</ParamField>
+
+<ParamField body="disable-scroll" type="boolean" default="false">
+  Disables page scrolling while the user is touching the chart canvas.
+</ParamField>
+
+<ParamField body="support-hover" type="boolean" default="false">
+  Enables hover interactions on PC platforms.
+</ParamField>
+
+<ParamField body="init-delay" type="number" default="30">
+  Delay in milliseconds before the chart initializes. Increase this value if the chart container has not finished laying out by the time initialization runs.
+</ParamField>
+
+## Events
+
+Bind events with Vue's `v-on` / `@` directive:
+
+```vue
+<template>
+  <uni-echarts
+    :option="option"
+    @click="handleClick"
+    @finished.once="handleFinished"
+    @zr:click="handleZrClick"
+    @native:tap="handleNativeTap"
+  />
+</template>
+```
+
+<Note>
+  Only the `.once` modifier is supported. Other modifiers (`.stop`, `.prevent`, etc.) are tightly coupled to DOM event mechanics and are not available. The `.once` modifier is also **not supported on Mini Programs**.
+</Note>
+
+### Standard ECharts events
+
+| Event | Description |
+|-------|-------------|
+| `highlight` | A data item is highlighted |
+| `downplay` | A data item is downplayed |
+| `selectchanged` | Selection state changes |
+| `legendselectchanged` | Legend selection changes |
+| `legendselected` | A legend item is selected |
+| `legendunselected` | A legend item is unselected |
+| `legendselectall` | All legend items selected |
+| `legendinverseselect` | Legend selection inverted |
+| `legendscroll` | Legend is scrolled |
+| `datazoom` | Data zoom range changes |
+| `datarangeselected` | Visual map range changes |
+| `graphroam` | Graph chart is roamed (panned/zoomed) |
+| `georoam` | Geo component is roamed |
+| `treeroam` | Tree chart is roamed |
+| `timelinechanged` | Timeline index changes |
+| `timelineplaychanged` | Timeline play state changes |
+| `restore` | Chart is restored to initial state |
+| `dataviewchanged` | Data view content changes |
+| `magictypechanged` | Magic type (chart type switcher) changes |
+| `geoselectchanged` | Geo selection changes |
+| `geoselected` | A geo region is selected |
+| `geounselected` | A geo region is unselected |
+| `axisareaselected` | Axis area is selected |
+| `brush` | Brush selection is active |
+| `brushEnd` | Brush selection ends |
+| `brushselected` | Brush selection result |
+| `globalcursortaken` | Global cursor is taken |
+| `rendered` | Chart finishes a render frame |
+| `finished` | All animations and rendering are complete |
+
+### Mouse events
+
+| Event | Description |
+|-------|-------------|
+| `click` | Mouse click on a chart element |
+| `dblclick` | Double click on a chart element |
+| `mouseover` | Mouse enters a chart element |
+| `mouseout` | Mouse leaves a chart element |
+| `mousemove` | Mouse moves over the chart |
+| `mousedown` | Mouse button pressed on chart |
+| `mouseup` | Mouse button released on chart |
+| `globalout` | Mouse leaves the chart area |
+| `contextmenu` | Right-click context menu |
+
+### ZRender events
+
+ZRender is ECharts' underlying rendering engine. These events fire on the canvas surface regardless of whether a chart element was hit. All ZRender events follow the `zr:<eventName>` naming pattern.
+
+| Event | Description |
+|-------|-------------|
+| `zr:click` | Click on the canvas |
+| `zr:dblclick` | Double click on the canvas |
+| `zr:mousedown` | Mouse button pressed |
+| `zr:mouseup` | Mouse button released |
+| `zr:mouseover` | Mouse enters the canvas |
+| `zr:mouseout` | Mouse leaves the canvas |
+| `zr:mousemove` | Mouse moves over canvas |
+| `zr:mousewheel` | Mouse wheel scrolled |
+| `zr:contextmenu` | Right-click context menu |
+| `zr:drag` | Drag in progress |
+| `zr:dragstart` | Drag begins |
+| `zr:dragend` | Drag ends |
+| `zr:dragenter` | Dragged item enters canvas |
+| `zr:dragleave` | Dragged item leaves canvas |
+| `zr:dragover` | Dragged item is over canvas |
+| `zr:drop` | Item dropped on canvas |
+
+### Other events
+
+| Event | Since | Description |
+|-------|-------|-------------|
+| `inited` | v0.1.2 | Fired after the ECharts instance has been initialized |
+| `showtip` | v0.1.2 | Fired when a tooltip is shown |
+| `hidetip` | v0.1.2 | Fired when a tooltip is hidden |
+
+### Native DOM / uni-app events
+
+By default, Uni ECharts binds all events to the ECharts instance. To bind a native DOM or uni-app native event instead, prefix the event name with `native:`.
+
+```vue
+<template>
+  <!-- In uni-app, use `tap` instead of `click` for native tap events -->
+  <uni-echarts @native:tap="handleNativeTap" />
+</template>
+```
+
+Supported native event names (all available with the `native:` prefix):
+
+**DOM/mouse events:** `click`, `dblclick`, `mousedown`, `mouseup`, `mouseover`, `mouseout`, `mousemove`, `mousewheel`, `contextmenu`, `drag`, `dragstart`, `dragend`, `dragenter`, `dragleave`, `dragover`, `drop`
+
+**uni-app touch events:** `touchstart`, `touchmove`, `touchcancel`, `touchend`, `tap`, `longpress`, `longtap`, `transitionend`, `animationstart`, `animationiteration`, `animationend`, `touchforcechange`
+
+For more information, see the [ECharts events reference](https://echarts.apache.org/en/api.html#events).
+
+## Slots
+
+| Name | Description |
+|------|-------------|
+| `default` | Default slot rendered inside the chart container |
+
+## Exposes
+
+Access the following methods by attaching a [template ref](https://vuejs.org/guide/essentials/template-refs.html#ref-on-component) to the component:
+
+```vue
+<template>
+  <uni-echarts ref="chartEl" :option="option" />
+</template>
+
+<script lang="ts" setup>
+import type { UniEchartsInst } from "uni-echarts/shared";
+import { shallowRef } from "vue";
+
+const chartEl = shallowRef<UniEchartsInst | null>(null);
+</script>
+```
+
+<Tabs>
+  <Tab title="npm">
+    ```ts
+    import type { UniEchartsInst } from "uni-echarts/shared";
+    ```
+  </Tab>
+  <Tab title="uni-modules">
+    ```ts
+    import type { UniEchartsInst } from "@/uni_modules/xiaohe-echarts";
+    ```
+  </Tab>
+</Tabs>
+
+### Instance methods
+
+<ResponseField name="setOption" type="function">
+  Calls [`echartsInstance.setOption`](https://echarts.apache.org/en/api.html#echartsInstance.setOption). Sets or merges chart configuration and data.
+</ResponseField>
+
+<ResponseField name="getWidth" type="function">
+  Calls [`echartsInstance.getWidth`](https://echarts.apache.org/en/api.html#echartsInstance.getWidth). Returns the chart container width in pixels.
+</ResponseField>
+
+<ResponseField name="getHeight" type="function">
+  Calls [`echartsInstance.getHeight`](https://echarts.apache.org/en/api.html#echartsInstance.getHeight). Returns the chart container height in pixels.
+</ResponseField>
+
+<ResponseField name="getDom" type="function">
+  Calls [`echartsInstance.getDom`](https://echarts.apache.org/en/api.html#echartsInstance.getDom). Returns the chart's DOM container element.
+</ResponseField>
+
+<ResponseField name="getOption" type="function">
+  Calls [`echartsInstance.getOption`](https://echarts.apache.org/en/api.html#echartsInstance.getOption). Returns the current merged option object.
+</ResponseField>
+
+<ResponseField name="resize" type="function">
+  Calls [`echartsInstance.resize`](https://echarts.apache.org/en/api.html#echartsInstance.resize). Resizes the chart to fit its container.
+</ResponseField>
+
+<ResponseField name="dispatchAction" type="function">
+  Calls [`echartsInstance.dispatchAction`](https://echarts.apache.org/en/api.html#echartsInstance.dispatchAction). Triggers a chart action programmatically.
+</ResponseField>
+
+<ResponseField name="convertToPixel" type="function">
+  Calls [`echartsInstance.convertToPixel`](https://echarts.apache.org/en/api.html#echartsInstance.convertToPixel). Converts a logical coordinate to pixel coordinates.
+</ResponseField>
+
+<ResponseField name="convertFromPixel" type="function">
+  Calls [`echartsInstance.convertFromPixel`](https://echarts.apache.org/en/api.html#echartsInstance.convertFromPixel). Converts pixel coordinates to logical coordinates.
+</ResponseField>
+
+<ResponseField name="containPixel" type="function">
+  Calls [`echartsInstance.containPixel`](https://echarts.apache.org/en/api.html#echartsInstance.containPixel). Returns whether a pixel coordinate is inside a given component.
+</ResponseField>
+
+<ResponseField name="getDataURL" type="function">
+  Calls [`echartsInstance.getDataURL`](https://echarts.apache.org/en/api.html#echartsInstance.getDataURL). Exports the chart as a base64 data URL.
+</ResponseField>
+
+<ResponseField name="getConnectedDataURL" type="function">
+  Calls [`echartsInstance.getConnectedDataURL`](https://echarts.apache.org/en/api.html#echartsInstance.getConnectedDataURL). Exports all connected charts as a single base64 data URL.
+</ResponseField>
+
+<ResponseField name="appendData" type="function">
+  Calls [`echartsInstance.appendData`](https://echarts.apache.org/en/api.html#echartsInstance.appendData). Appends data incrementally for progressive rendering of large datasets.
+</ResponseField>
+
+<ResponseField name="clear" type="function">
+  Calls [`echartsInstance.clear`](https://echarts.apache.org/en/api.html#echartsInstance.clear). Clears the chart. Does not dispose the ECharts instance.
+</ResponseField>
+
+<ResponseField name="isDisposed" type="function">
+  Calls [`echartsInstance.isDisposed`](https://echarts.apache.org/en/api.html#echartsInstance.isDisposed). Returns `true` if the ECharts instance has been disposed.
+</ResponseField>
+
+<ResponseField name="dispose" type="function">
+  Calls [`echartsInstance.dispose`](https://echarts.apache.org/en/api.html#echartsInstance.dispose). Destroys the ECharts instance and frees its resources.
+</ResponseField>
+
+<ResponseField name="toTempFilePath" type="function">
+  Wraps uni-app's [`canvasToTempFilePath`](https://uniapp.dcloud.net.cn/api/canvas/canvasToTempFilePath.html). Exports the chart canvas to a temporary file. You do not need to pass `canvasId` or `canvas` — the component handles those internally.
+</ResponseField>
+
+### Instance properties
+
+<ResponseField name="root" type="HTMLElement | null">
+  The component's root DOM element. May be `null` before the component has mounted.
+</ResponseField>
+
+<ResponseField name="canvasId" type="string">
+  The canvas element's unique ID, used internally by the uni-app canvas API.
+</ResponseField>
+
+<ResponseField name="chart" type="EChartsType | null">
+  The underlying ECharts instance. `null` before initialization completes or after `dispose` has been called. Prefer using the exposed methods above rather than accessing the instance directly.
+</ResponseField>
+
+#### `toTempFilePath` example
+
+```vue
+<template>
+  <uni-echarts ref="chartEl" :option="option" />
+</template>
+
+<script lang="ts" setup>
+import type { UniEchartsInst } from "uni-echarts/shared";
+import { shallowRef } from "vue";
+
+const chartEl = shallowRef<UniEchartsInst | null>(null);
+
+async function download() {
+  if (chartEl.value == null) {
+    return;
+  }
+
+  const { tempFilePath } = await chartEl.value.toTempFilePath();
+
+  // use tempFilePath to save or share the image
+}
+</script>
+```
+
+### Static methods
+
+Call static ECharts methods directly on the `echarts` object rather than through the component instance:
+
+```js
+import { use } from "echarts/core";
+
+use([
+  // register components and renderers here
+]);
+```

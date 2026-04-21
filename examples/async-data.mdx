@@ -1,0 +1,204 @@
+---
+title: "Loading chart data asynchronously in uni-echarts"
+description: "Show a loading indicator while fetching data, then update the chart option reactively once the data arrives using the loading and loading-options props."
+---
+
+This example demonstrates how to fetch data asynchronously and update a chart once it arrives. While the request is in flight, the `loading` prop displays ECharts' built-in loading overlay so users know something is happening. When data is ready, updating the reactive `option` ref triggers a seamless re-render.
+
+## Complete example
+
+<CodeGroup>
+
+```vue index.vue (script setup)
+<script lang="ts" setup>
+import type { BarSeriesOption } from "echarts/charts";
+import { BarChart } from "echarts/charts";
+import type {
+  DatasetComponentOption,
+  GridComponentOption
+} from "echarts/components";
+import { DatasetComponent, GridComponent } from "echarts/components";
+import type { ComposeOption } from "echarts/core";
+import * as echarts from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import { GLOBAL_OPTION } from "../echarts";
+import theme from "./theme.json";
+
+type EChartsOption = ComposeOption<
+  | GridComponentOption
+  | DatasetComponentOption
+  | BarSeriesOption
+>;
+
+echarts.use([
+  GridComponent,
+  DatasetComponent,
+  BarChart,
+  CanvasRenderer
+]);
+
+echarts.registerTheme("ovilia-green", theme);
+
+const option = ref({
+  ...GLOBAL_OPTION,
+  grid: {
+    top: 20,
+    right: 10,
+    bottom: 10,
+    left: 10,
+    outerBoundsMode: "same",
+    outerBoundsContain: "axisLabel"
+  },
+  xAxis: {
+    type: "category"
+  },
+  yAxis: {},
+  series: [
+    { type: "bar" },
+    { type: "bar" },
+    { type: "bar" }
+  ],
+  dataset: {
+    dimensions: ["Product", "2023", "2024", "2025"],
+    source: getData()
+  }
+} satisfies EChartsOption);
+
+const loading = shallowRef(false);
+
+const loadingOptions = {
+  text: "请稍候...",
+  color: "#4ea397",
+  maskColor: "rgba(255, 255, 255, 0.8)"
+};
+
+function random() {
+  return Math.round(300 + Math.random() * 700) / 10;
+}
+
+function getData() {
+  return [
+    { Product: "Matcha Latte", 2023: random(), 2024: random(), 2025: random() },
+    { Product: "Milk Tea", 2023: random(), 2024: random(), 2025: random() },
+    { Product: "Cheese Cocoa", 2023: random(), 2024: random(), 2025: random() },
+    { Product: "Walnut Brownie", 2023: random(), 2024: random(), 2025: random() }
+  ];
+}
+
+const surplus = shallowRef(0);
+let timer = 0;
+
+function destroyTimer() {
+  if (timer === 0) return;
+  clearInterval(timer);
+  timer = 0;
+}
+
+function tick() {
+  surplus.value -= 1;
+  if (surplus.value <= 0) {
+    destroyTimer();
+    option.value.dataset.source = getData();
+    loading.value = false;
+  }
+}
+
+function refresh() {
+  loading.value = true;
+  surplus.value = 3;
+  // @ts-expect-error whatever
+  timer = setInterval(tick, 1000);
+}
+
+onUnload(() => {
+  destroyTimer();
+});
+</script>
+```
+
+```vue index.vue (template)
+<template>
+  <uni-echarts
+    custom-class="h-60"
+    :option="option"
+    theme="ovilia-green"
+    autoresize
+    :loading="loading"
+    :loading-options="loadingOptions"
+  ></uni-echarts>
+
+  <view class="flex flex-col items-center mt-2">
+    <text v-if="surplus > 0" class="text-base">
+      Data loading in {{ surplus }} second(s)...
+    </text>
+
+    <button v-else @click="refresh()">Refresh data</button>
+  </view>
+</template>
+```
+
+</CodeGroup>
+
+## How it works
+
+### Showing the loading overlay
+
+Set `:loading="loading"` on the component. When `loading` is `true`, ECharts renders its built-in overlay on top of the canvas.
+
+```vue
+<uni-echarts :loading="loading" :loading-options="loadingOptions"></uni-echarts>
+```
+
+Customize the overlay appearance with `loading-options`:
+
+```ts
+const loadingOptions = {
+  text: "请稍候...",
+  color: "#4ea397",
+  maskColor: "rgba(255, 255, 255, 0.8)"
+};
+```
+
+The full set of available keys maps directly to [ECharts `showLoading` opts](https://echarts.apache.org/en/api.html#echartsInstance.showLoading).
+
+### Updating data reactively
+
+Once data arrives, mutate the `option` ref in place. The component watches the reactive value and calls `setOption` automatically:
+
+```ts
+option.value.dataset.source = getData();
+loading.value = false;
+```
+
+<Tip>
+  Mutate the specific nested property rather than replacing the entire `option` object when you want ECharts to animate the transition between old and new data.
+</Tip>
+
+### Registering a custom theme
+
+Call `echarts.registerTheme(name, themeObject)` before mounting any chart that uses it, then pass the name as the `theme` prop:
+
+```ts
+import theme from "./theme.json";
+
+echarts.registerTheme("ovilia-green", theme);
+```
+
+```vue
+<uni-echarts theme="ovilia-green" :option="option"></uni-echarts>
+```
+
+### Cleaning up timers
+
+Use `onUnload` (uni-app's equivalent of `onUnmounted` for pages) to clear any intervals or timeouts so they do not leak after the user navigates away.
+
+```ts
+onUnload(() => {
+  destroyTimer();
+});
+```
+
+## Related
+
+- [Component props and exposes](/api/component) — `loading`, `loading-options`, `theme` prop reference
+- [Built-in themes example](/examples/builtin-theme) — Switch between `"dark"` and `"light"` themes at runtime

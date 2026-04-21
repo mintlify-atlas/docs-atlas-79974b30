@@ -1,0 +1,204 @@
+---
+title: "Manual option updates with setOption in uni-echarts"
+description: "Use the manual-update prop and a template ref to call setOption directly, bypassing serialization limits that drop function fields on Mini Programs."
+---
+
+Some Mini Program platforms pass the chart option through JSON serialization, which silently drops any function-typed fields such as `tooltip.formatter`, `tooltip.position`, or axis label formatters. The `manual-update` prop opts out of the automatic `:option` binding so you can call `setOption` yourself — keeping all function fields intact.
+
+## Complete example
+
+<CodeGroup>
+
+```vue index.vue (script setup)
+<script lang="ts" setup>
+import type { LineSeriesOption } from "echarts/charts";
+import { LineChart } from "echarts/charts";
+import type {
+  DataZoomComponentOption,
+  GridComponentOption,
+  ToolboxComponentOption,
+  TooltipComponentOption
+} from "echarts/components";
+import {
+  DataZoomComponent,
+  GridComponent,
+  ToolboxComponent,
+  TooltipComponent
+} from "echarts/components";
+import type { ComposeOption } from "echarts/core";
+import * as echarts from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import type { UniEchartsInst } from "uni-echarts/shared";
+import { GLOBAL_OPTION } from "../echarts";
+
+type EChartsOption = ComposeOption<
+  | TooltipComponentOption
+  | ToolboxComponentOption
+  | GridComponentOption
+  | DataZoomComponentOption
+  | LineSeriesOption
+>;
+
+echarts.use([
+  TooltipComponent,
+  ToolboxComponent,
+  GridComponent,
+  DataZoomComponent,
+  LineChart,
+  CanvasRenderer
+]);
+
+const chartEl = ref<UniEchartsInst | null>(null);
+
+function getData() {
+  let base = new Date(1988, 9, 3).valueOf();
+  const day1 = 24 * 3600 * 1000;
+  const data = [[base, Math.random() * 300]];
+
+  for (let i = 1; i < 20000; i += 1) {
+    data.push([
+      new Date((base += day1)).valueOf(),
+      Math.round((Math.random() - 0.5) * 20 + data[i - 1][1])
+    ]);
+  }
+
+  return data;
+}
+
+function setOption() {
+  if (chartEl.value == null) {
+    return;
+  }
+
+  const data = getData();
+
+  chartEl.value.setOption({
+    ...GLOBAL_OPTION,
+    grid: {
+      top: 40,
+      right: 16,
+      bottom: 56,
+      left: 10,
+      outerBoundsMode: "same",
+      outerBoundsContain: "axisLabel"
+    },
+    tooltip: {
+      trigger: "axis",
+      position(point) {
+        return [point[0], "10%"];
+      },
+      textStyle: {
+        // #ifdef MP-WEIXIN
+        textShadowBlur: 1
+        // #endif
+      }
+    },
+    toolbox: {
+      top: 0,
+      right: 10,
+      feature: {
+        dataZoom: { yAxisIndex: "none" },
+        restore: {}
+      }
+    },
+    xAxis: { type: "time" },
+    yAxis: {
+      type: "value",
+      boundaryGap: [0, "100%"]
+    },
+    dataZoom: [
+      { type: "inside", start: 0, end: 20 },
+      { type: "slider", start: 0, end: 20 }
+    ],
+    series: [
+      {
+        type: "line",
+        name: "Fake Data",
+        smooth: true,
+        symbol: "none",
+        areaStyle: {},
+        data
+      }
+    ]
+  } satisfies EChartsOption);
+}
+</script>
+```
+
+```vue index.vue (template)
+<template>
+  <uni-echarts
+    ref="chartEl"
+    custom-class="h-75"
+    manual-update
+    autoresize
+    @inited="setOption()"
+  ></uni-echarts>
+</template>
+```
+
+</CodeGroup>
+
+## Why `manual-update`?
+
+On certain Mini Program platforms (notably WeChat), the component option is transferred across the logic/render thread boundary via JSON. Any `function` value in the option object is stripped during serialization and arrives as `undefined` on the other side.
+
+In this example, `tooltip.position` is a function that dynamically positions the tooltip. Without `manual-update`, this function would be lost and the tooltip would fall back to its default position.
+
+<Warning>
+  The `manual-update` prop disables reactive `:option` binding entirely. You are responsible for calling `setOption` whenever data changes. Do not bind both `:option` and `manual-update` simultaneously — the automatic binding will have no effect.
+</Warning>
+
+## How it works
+
+### Typed template ref
+
+Import `UniEchartsInst` to get a fully-typed ref for the component instance:
+
+<Tabs>
+  <Tab title="npm">
+    ```ts
+    import type { UniEchartsInst } from "uni-echarts/shared";
+
+    const chartEl = ref<UniEchartsInst | null>(null);
+    ```
+  </Tab>
+  <Tab title="uni-modules">
+    ```ts
+    import type { UniEchartsInst } from "@/uni_modules/xiaohe-echarts";
+
+    const chartEl = ref<UniEchartsInst | null>(null);
+    ```
+  </Tab>
+</Tabs>
+
+### Calling `setOption` after initialization
+
+The `@inited` event fires once the ECharts instance is ready. Call `setOption` inside the handler so the canvas exists and has a valid size before you attempt to render:
+
+```vue
+<uni-echarts
+  ref="chartEl"
+  manual-update
+  @inited="setOption()"
+></uni-echarts>
+```
+
+```ts
+function setOption() {
+  if (chartEl.value == null) {
+    return;
+  }
+  chartEl.value.setOption({ /* option with functions intact */ });
+}
+```
+
+<Note>
+  An alternative to `manual-update` is `provideEchartsOption` from the provide API, which lets you set function-containing options globally without a template ref. See [Provide functions](/api/functions) for details.
+</Note>
+
+## Related
+
+- [Component props and exposes](/api/component) — `manual-update` prop, `setOption` and `inited` event reference
+- [Provide functions](/api/functions) — `provideEchartsOption` for global function-safe option injection
+- [FAQ](/guide/faq) — Mini Program function field serialization limitation explained

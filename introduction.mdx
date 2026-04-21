@@ -1,0 +1,52 @@
+---
+title: "Uni ECharts: Apache ECharts for uni-app"
+description: "Uni ECharts is a Vue 3 component library that brings Apache ECharts to uni-app, with cross-platform support for Web, Mini Programs, and APP."
+---
+
+Uni ECharts is an Apache ECharts component for uni-app. It lets you render interactive charts across Web, WeChat/Alipay Mini Programs, and APP from a single codebase, with an API nearly identical to [Vue ECharts](https://github.com/ecomfe/vue-echarts) so you can get started quickly without learning a new abstraction.
+
+<CardGroup cols={2}>
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Install the package and render your first chart in a few steps.
+  </Card>
+  <Card title="ECharts configuration" icon="sliders" href="/guide/echarts">
+    Tree-shaking, on-demand imports, and custom ECharts builds.
+  </Card>
+  <Card title="Dependency injection" icon="syringe" href="/guide/provide">
+    Configure theme and ECharts globally with provide/inject.
+  </Card>
+  <Card title="FAQ" icon="circle-question" href="/guide/faq">
+    Solutions to common issues including Mini Program styling quirks.
+  </Card>
+</CardGroup>
+
+## Key features
+
+- **Cross-platform** — runs on Web, WeChat Mini Program, Alipay Mini Program, and APP from a single component.
+- **Vue 3 Composition API** — full support for `<script setup>` and composables.
+- **TypeScript** — ships with `.d.ts` type declarations out of the box.
+- **easycom support** — use `<uni-echarts>` without any import when installed via uni-modules.
+- **Near-identical API to Vue ECharts** — if you already know Vue ECharts, there is almost nothing new to learn.
+- **Free for commercial use** — released under the MIT license.
+
+<Info>
+  The npm package `uni-echarts` is currently at version **2.5.1**. The Vite plugin (available since 2.0.0) automates `provideEcharts` injection and optimizeDeps exclusion as of 2.5.0.
+</Info>
+
+## Acknowledgements
+
+Uni ECharts builds on the shoulders of these open-source projects:
+
+- [echarts](https://github.com/apache/echarts) — the underlying charting library
+- [vue-echarts](https://github.com/ecomfe/vue-echarts) — API design reference
+- [lime-echart](https://gitee.com/liangei/lime-echart) — uni-app canvas integration patterns
+- [echarts-for-weixin](https://github.com/ecomfe/echarts-for-weixin) — WeChat Mini Program renderer
+- [mitt](https://github.com/developit/mitt) — lightweight event emitter
+
+## License
+
+Uni ECharts is released under the [MIT license](https://github.com/xiaohe0601/uni-echarts/blob/main/LICENSE). You are free to use it in personal and commercial projects.
+
+---
+
+The Apache Software Foundation [Apache ECharts, ECharts](https://echarts.apache.org/), Apache, the Apache feather, and the Apache ECharts project logo are either registered trademarks or trademarks of the [Apache Software Foundation](https://www.apache.org/).

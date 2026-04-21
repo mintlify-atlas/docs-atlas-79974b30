@@ -1,0 +1,87 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Uni ECharts",
+  "projectDescription": "A Vue 3 Apache ECharts component for uni-app that enables seamless chart rendering across Web, Mini Programs, and APP platforms.",
+  "theme": "palm",
+  "primaryColor": "#60cf5d",
+  "lightColor": "#ace4b4",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guide",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "guide/echarts",
+              "guide/provide"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "examples/basic",
+              "examples/async-data",
+              "examples/manual-update",
+              "examples/builtin-theme",
+              "examples/connectable",
+              "examples/export-image",
+              "examples/popup"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "guide/faq",
+              "guide/migration",
+              "guide/changelog"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API",
+            "pages": [
+              "api/component",
+              "api/functions"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Drop-in Apache ECharts component for uni-app with Vue 3 Composition API support",
+    "Cross-platform compatibility: Web, WeChat/Alipay Mini Programs, and APP",
+    "Vite plugin for automatic echarts injection and optimizeDeps configuration",
+    "Dependency injection (provide/inject) API for global theme and option configuration",
+    "TypeScript support with full type definitions",
+    "easycom support for zero-config component auto-import",
+    "CLI tool (@uni-echarts/c2e) for converting custom ECharts builds to ESM format",
+    "Component exposes ECharts instance methods via template refs"
+  ],
+  "publicApiSurface": [
+    "UniEcharts (default export) — main chart component",
+    "provideEcharts(echarts) — inject echarts instance globally",
+    "provideEchartsTheme(value) — inject chart theme globally",
+    "provideEchartsOption(value) / provideEchartsOption(key, value) — inject chart option globally",
+    "provideEchartsInitOptions(value) — inject echarts init options globally",
+    "provideEchartsUpdateOptions(value) — inject setOption options globally",
+    "provideEchartsLoadingOptions(value) — inject loading options globally",
+    "UniEchartsResolver() — component/API auto-import resolver for unplugin",
+    "UniEcharts() — Vite plugin (from uni-echarts/vite)",
+    "ECHARTS_KEY, THEME_KEY — provide/inject keys for Options API",
+    "UniEchartsInst — TypeScript type for component instance ref"
+  ]
+}

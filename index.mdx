@@ -1,97 +1,82 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Uni ECharts documentation home"
+description: "Uni ECharts is a Vue 3 component that brings Apache ECharts to uni-app, supporting Web, WeChat/Alipay Mini Programs, and APP from a single codebase."
 ---
 
-## Setting up
+Uni ECharts makes it easy to use Apache ECharts in your uni-app projects. With an API that mirrors [Vue ECharts](https://github.com/ecomfe/vue-echarts), you get full cross-platform chart rendering — Web, Mini Programs, and APP — without boilerplate. Install via npm or the uni-modules plugin market and start rendering charts in minutes.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Introduction" icon="book-open" href="/introduction">
+    Learn what Uni ECharts is, its key features, and how it fits into your uni-app project.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Install the package and render your first chart in just a few steps.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Component API" icon="puzzle-piece" href="/api/component">
+    Full reference for all props, events, slots, and exposed methods on the UniEcharts component.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Function API" icon="function" href="/api/functions">
+    Reference for all provide-based functions like provideEcharts and provideEchartsTheme.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Why Uni ECharts?
 
-Everything you need to create world-class documentation.
+Uni ECharts bridges the gap between Apache ECharts and the uni-app ecosystem. Unlike raw canvas integrations that require manual platform detection, Uni ECharts handles the differences between Web, WeChat Mini Program, Alipay Mini Program, and APP internally — you write your chart option once and it works everywhere.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+<CardGroup cols={2}>
+  <Card title="ECharts configuration" icon="sliders" href="/guide/echarts">
+    Learn tree-shaking, on-demand imports, and how to use a custom ECharts build.
   </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
+  <Card title="Dependency injection" icon="syringe" href="/guide/provide">
+    Use provide/inject to configure theme and options globally across many charts.
   </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
+  <Card title="Examples" icon="chart-bar" href="/examples/basic">
+    Explore real-world usage patterns from basic charts to popup integration.
   </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
+  <Card title="FAQ" icon="circle-question" href="/guide/faq">
+    Solutions to common issues including Mini Program styling and tooltip quirks.
   </Card>
-</Columns>
+</CardGroup>
 
-## Need inspiration?
+## Get started in three steps
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<Steps>
+  <Step title="Install Uni ECharts and ECharts">
+    ```bash
+    npm install echarts uni-echarts
+    ```
+  </Step>
+  <Step title="Configure the Vite plugin">
+    Add the Uni ECharts Vite plugin to your `vite.config.ts` to handle echarts injection automatically.
+    ```ts vite.config.ts
+    import { UniEcharts } from "uni-echarts/vite";
+    import { defineConfig } from "vite";
+
+    export default defineConfig({
+      plugins: [UniEcharts()]
+    });
+    ```
+  </Step>
+  <Step title="Use the component">
+    ```vue
+    <template>
+      <uni-echarts custom-class="chart" :option="option" />
+    </template>
+
+    <script setup lang="ts">
+    import { ref } from "vue";
+
+    const option = ref({
+      xAxis: { type: "category", data: ["Mon", "Tue", "Wed"] },
+      yAxis: { type: "value" },
+      series: [{ type: "bar", data: [120, 200, 150] }]
+    });
+    </script>
+
+    <style>
+    .chart { height: 300px; }
+    </style>
+    ```
+  </Step>
+</Steps>

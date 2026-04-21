@@ -1,0 +1,185 @@
+---
+title: "Frequently asked questions about Uni ECharts"
+description: "Answers to the most common questions about Uni ECharts, including unsupported features, PNPM configuration, Mini Program styling, and more."
+---
+
+This page collects common issues encountered when using Uni ECharts and their recommended solutions. If your question is not listed here, feel free to open an issue on GitHub.
+
+<AccordionGroup>
+
+  <Accordion title="What features are not supported?">
+    Due to limitations in the uni-app API, the following ECharts features are not supported:
+
+    - [SVG renderer](https://echarts.apache.org/handbook/zh/best-practices/canvas-vs-svg)
+    - [toolbox.feature.saveAsImage](https://echarts.apache.org/zh/option.html#toolbox.feature.saveAsImage)
+    - [series-map](https://echarts.apache.org/zh/option.html#series-map)
+    - [echarts-gl](https://github.com/ecomfe/echarts-gl)
+  </Accordion>
+
+  <Accordion title='Could not resolve "zrender/xxx"'>
+    When installing `echarts` with PNPM, you must enable the [shamefullyHoist](https://pnpm.io/settings#shamefullyhoist) option so that PNPM hoists `zrender` and other transitive dependencies to the root `node_modules`. Without it, `echarts` cannot resolve `zrender`-related imports.
+
+    **Option 1 — `.npmrc`**
+
+    ```dotenv
+    # .npmrc
+
+    shamefully-hoist=true
+    ```
+
+    **Option 2 — `pnpm-workspace.yaml`**
+
+    ```yaml
+    # pnpm-workspace.yaml
+
+    shamefullyHoist: true
+    ```
+
+    For other package managers such as Yarn v2, refer to their official documentation for the equivalent configuration.
+  </Accordion>
+
+  <Accordion title="Mini Program class / style attributes are not working">
+    On Mini Programs, Uni ECharts uses [virtualHost](https://uniapp.dcloud.net.cn/tutorial/vue-api.html) to render the component as a virtualized node, which causes the component's `class` and `style` attributes to have no effect. The following three solutions are available.
+
+    **Solution 1 — Enable `mergeVirtualHostAttributes` in `manifest.json`**
+
+    Add `mergeVirtualHostAttributes: true` under `mp-weixin` and/or `mp-alipay` in your `manifest.json`. This merges outer attributes back onto the virtual host node so that `class` and `style` work normally.
+
+    ```json5
+    // manifest.json
+
+    {
+      "mp-weixin": {
+        // ...
+        "mergeVirtualHostAttributes": true
+      },
+      "mp-alipay": {
+        // ...
+        "mergeVirtualHostAttributes": true
+      }
+    }
+    ```
+
+    ```vue
+    <template>
+      <uni-echarts class="chart" :option="option"></uni-echarts>
+    </template>
+    ```
+
+    ```vue
+    <style scoped>
+    .chart {
+      height: 300px;
+    }
+    </style>
+    ```
+
+    **Solution 2 — Use a non-scoped style block**
+
+    Move the relevant styles to a separate `<style>` block without the `scoped` attribute so that Uni ECharts can share the styles. Use the `custom-class` attribute to apply the class.
+
+    ```vue
+    <style>
+    .chart {
+      height: 300px;
+    }
+    </style>
+
+    <style scoped>
+    /* ... */
+    </style>
+    ```
+
+    ```vue
+    <template>
+      <uni-echarts custom-class="chart" :option="option"></uni-echarts>
+    </template>
+    ```
+
+    **Solution 3 — Use the `custom-style` attribute directly**
+
+    Pass inline styles via the `custom-style` attribute as a string or an object.
+
+    ```vue
+    <template>
+      <uni-echarts custom-style="height: 300px" :option="option"></uni-echarts>
+
+      <uni-echarts :custom-style="{ height: '300px' }" :option="option"></uni-echarts>
+    </template>
+    ```
+
+    **Overriding internal styles**
+
+    If you need to override styles inside Uni ECharts from a custom component, add `styleIsolation: "shared"` to the component options.
+
+    ```vue
+    <script setup>
+    defineOptions({
+      options: {
+        styleIsolation: "shared"
+      }
+    });
+    </script>
+    ```
+
+    <Accordion title="Options API">
+
+    ```vue
+    <script>
+    import { defineComponent } from "vue";
+
+    export default defineComponent({
+      options: {
+        styleIsolation: "shared"
+      }
+    });
+    </script>
+    ```
+
+    </Accordion>
+  </Accordion>
+
+  <Accordion title="Tooltip text on Mini Programs has an unexpected shadow">
+    The exact cause is unknown, but it is suspected to be a WeChat canvas rendering issue. You can work around it by setting `textShadowBlur` to `1`. Because `textShadowBlur: 0` has no effect, `1` is the minimum working value.
+
+    ```js
+    const option = ref({
+      tooltip: {
+        trigger: "item",
+        textStyle: {
+          // #ifdef MP-WEIXIN
+          textShadowBlur: 1
+          // #endif
+        }
+      }
+    });
+    ```
+
+    <Warning>
+      Setting `textShadowBlur` to `0` has no effect. Use `1` as a workaround until the upstream issue is resolved.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="The canvas does not scroll with the page in WeChat DevTools">
+    This is a known bug in WeChat DevTools. It does not affect real devices. You can safely ignore it during development and verify scroll behaviour on an actual device.
+  </Accordion>
+
+  <Accordion title="Function fields in option (e.g. formatter) are lost on Mini Programs">
+    Some Mini Program platforms pass `option` data through JSON serialization, which strips all function values such as `formatter`. Two solutions are available.
+
+    **Solution 1 — Use `manual-update` with `setOption`**
+
+    Enable the [`manual-update`](/api/component#attributes) attribute and call [`setOption`](/api/component#exposes) directly to bypass serialization entirely.
+
+    **Solution 2 — Use `provideEchartsOption`**
+
+    Pass the option via [`provideEchartsOption`](/api/functions#provideechartsoption) so it is provided through Vue's dependency injection mechanism rather than through component props. See [Dependency injection](/guide/provide) for details.
+  </Accordion>
+
+  <Accordion title="Chart does not render correctly inside a popup or modal">
+    Most popup and modal components include an entrance animation. When Uni ECharts first renders during the animation, it cannot correctly measure the canvas size. Delay the rendering of Uni ECharts until after the animation completes.
+
+    See the [Using charts in a popup](/examples/popup) example for a full working implementation.
+  </Accordion>
+
+</AccordionGroup>

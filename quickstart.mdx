@@ -1,80 +1,376 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: "Get started with Uni ECharts"
+description: "Install Uni ECharts via npm or the uni-modules plugin market and render your first Apache ECharts chart in a uni-app project in a few steps."
 ---
 
-## Get started in three steps
+Uni ECharts supports two installation methods: **npm** (recommended) and **uni-modules** via the DCloud plugin market. Both methods let you render Apache ECharts charts across Web, WeChat/Alipay Mini Programs, and APP. Choose the method that fits your project setup.
 
-Get your documentation site running locally and make your first customization.
+<Info>
+**Prerequisites**
+- Node.js >= 20.19.0, >= 22.12.0, or >= 24.0.0
+- echarts >= 5.3.0
+- vue >= 3.3.0 (uni-app has not yet adapted to Vue 3.5; use `3.4.x` to stay aligned with uni-app)
+</Info>
 
-### Step 1: Set up your local environment
+<Tabs>
+  <Tab title="NPM (recommended)">
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    <Steps>
+      <Step title="Install packages">
+        Install both `echarts` and `uni-echarts` from npm.
 
-### Step 2: Deploy your changes
+        <CodeGroup>
+          ```bash pnpm
+          pnpm add echarts uni-echarts
+          ```
+          ```bash yarn
+          yarn add echarts uni-echarts
+          ```
+          ```bash npm
+          npm install echarts uni-echarts
+          ```
+        </CodeGroup>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+        <Tip>
+          If you need a custom ECharts build, see [Configuring ECharts](/guide/echarts#custom-echarts-build).
+        </Tip>
+      </Step>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+      <Step title="Configure Vite">
+        Because the `uni-echarts` npm package ships as uncompiled `.vue` files, Vite's dependency pre-bundling can produce extra `echarts` copies. Exclude `uni-echarts` from pre-bundling:
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+        ```js vite.config.js
+        import { defineConfig } from "vite";
 
-### Step 3: Go live
+        export default defineConfig({
+          // ...
+          optimizeDeps: { // [!code ++]
+            exclude: [ // [!code ++]
+              "uni-echarts" // [!code ++]
+            ] // [!code ++]
+          } // [!code ++]
+        });
+        ```
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+        <Note>
+          Since `2.5.0`, adding the Vite plugin (see below) automatically adds this exclusion — you can skip the manual `optimizeDeps` config.
+        </Note>
 
-## Next steps
+        **Vite plugin (recommended since 2.0.0)**
 
-Now that you have your docs running, explore these key features:
+        The Uni ECharts Vite plugin handles `optimizeDeps` exclusion, auto-calls `provideEcharts`, and enables custom ECharts builds.
 
-<CardGroup cols={2}>
+        ```js vite.config.js
+        import { UniEcharts } from "uni-echarts/vite"; // [!code ++]
+        import { defineConfig } from "vite";
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+        export default defineConfig({
+          // ...
+          plugins: [
+            UniEcharts() // [!code ++]
+          ]
+        });
+        ```
+      </Step>
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+      <Step title="Set up auto-import (optional)">
+        Uni ECharts works with [`@uni-helper/vite-plugin-uni-components`](https://github.com/uni-helper/vite-plugin-uni-components) and [`unplugin-auto-import`](https://github.com/unplugin/unplugin-auto-import) for zero-import usage.
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
+        <CodeGroup>
+          ```bash pnpm
+          pnpm add -D @uni-helper/vite-plugin-uni-components unplugin-auto-import
+          ```
+          ```bash yarn
+          yarn add --dev @uni-helper/vite-plugin-uni-components unplugin-auto-import
+          ```
+          ```bash npm
+          npm install -D @uni-helper/vite-plugin-uni-components unplugin-auto-import
+          ```
+        </CodeGroup>
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
+        ```js vite.config.js
+        import Uni from "@dcloudio/vite-plugin-uni";
+        import UniComponents from "@uni-helper/vite-plugin-uni-components";
+        import { UniEchartsResolver } from "uni-echarts/resolver"; // [!code ++]
+        import AutoImport from "unplugin-auto-import/vite";
+        import { defineConfig } from "vite";
 
-</CardGroup>
+        export default defineConfig({
+          plugins: [
+            AutoImport({
+              resolvers: [
+                UniEchartsResolver() // [!code ++]
+              ]
+            }),
+            // Ensure this is placed before Uni()
+            UniComponents({
+              resolvers: [
+                UniEchartsResolver() // [!code ++]
+              ]
+            }),
+            Uni()
+          ]
+        });
+        ```
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+        If you use PNPM, add this to your `.npmrc` (see [issue #389](https://github.com/unplugin/unplugin-vue-components/issues/389)):
+
+        ```dotenv .npmrc
+        shamefully-hoist=true
+        ```
+
+        For TypeScript type hints for auto-imported components, add to `tsconfig.json`:
+
+        ```json5 tsconfig.json
+        {
+          "compilerOptions": {
+            "types": [
+              // ...
+              "uni-echarts/global" // [!code ++]
+            ]
+          }
+        }
+        ```
+      </Step>
+
+      <Step title="Use the component">
+        Call `provideEcharts` with your echarts instance, register the modules you need, then pass `option` to `<uni-echarts>`.
+
+        <Note>
+          `provideEcharts` is required. If you configured the Vite plugin in step 2, this call is handled automatically and you can omit it.
+        </Note>
+
+        ```vue
+        <template>
+          <uni-echarts custom-class="chart" :option="option"></uni-echarts>
+        </template>
+
+        <script setup>
+        import { PieChart } from "echarts/charts";
+        import { DatasetComponent, LegendComponent, TooltipComponent } from "echarts/components";
+        import * as echarts from "echarts/core";
+        import { CanvasRenderer } from "echarts/renderers";
+        import { provideEcharts } from "uni-echarts/shared";
+        import { ref } from "vue";
+
+        // Required: provide the echarts instance
+        provideEcharts(echarts);
+
+        echarts.use([
+          LegendComponent,
+          TooltipComponent,
+          DatasetComponent,
+          PieChart,
+          CanvasRenderer
+        ]);
+
+        const option = ref({
+          legend: { top: 10, left: "center" },
+          tooltip: { trigger: "item" },
+          series: [{
+            type: "pie",
+            radius: ["30%", "52%"],
+            itemStyle: { borderWidth: 2, borderColor: "#ffffff", borderRadius: 10 }
+          }],
+          dataset: {
+            dimensions: ["Source", "Count"],
+            source: [
+              ["Search Engine", 1048],
+              ["Direct", 735],
+              ["Email", 580]
+            ]
+          }
+        });
+        </script>
+
+        <style>
+        .chart {
+          height: 300px;
+        }
+        </style>
+        ```
+
+        <Accordion title="Options API example">
+          ```vue
+          <template>
+            <uni-echarts custom-class="chart" :option="option"></uni-echarts>
+          </template>
+
+          <script>
+          import { PieChart } from "echarts/charts";
+          import { DatasetComponent, LegendComponent, TooltipComponent } from "echarts/components";
+          import * as echarts from "echarts/core";
+          import { CanvasRenderer } from "echarts/renderers";
+          import UniEcharts from "uni-echarts";
+          import { ECHARTS_KEY } from "uni-echarts/shared";
+          import { defineComponent } from "vue";
+
+          echarts.use([LegendComponent, TooltipComponent, DatasetComponent, PieChart, CanvasRenderer]);
+
+          export default defineComponent({
+            components: { UniEcharts },
+            provide: {
+              [ECHARTS_KEY]: echarts
+            },
+            data() {
+              return {
+                option: {
+                  legend: { top: 10, left: "center" },
+                  tooltip: { trigger: "item" },
+                  series: [{ type: "pie", radius: ["30%", "52%"] }],
+                  dataset: {
+                    dimensions: ["Source", "Count"],
+                    source: [["Search Engine", 1048], ["Direct", 735]]
+                  }
+                }
+              };
+            }
+          });
+          </script>
+
+          <style>
+          .chart { height: 300px; }
+          </style>
+          ```
+        </Accordion>
+
+        <Warning>
+          If your chart is not displaying on Mini Programs, check the [Mini Program class/style FAQ](/guide/faq#mini-program-class--style-attributes-are-not-working) for solutions.
+        </Warning>
+      </Step>
+    </Steps>
+
+  </Tab>
+  <Tab title="Uni Modules">
+
+    <Steps>
+      <Step title="Install ECharts via npm">
+        <CodeGroup>
+          ```bash pnpm
+          pnpm add echarts
+          ```
+          ```bash yarn
+          yarn add echarts
+          ```
+          ```bash npm
+          npm install echarts
+          ```
+        </CodeGroup>
+
+        <Tip>
+          If you need a custom ECharts build, see [Configuring ECharts](/guide/echarts#custom-echarts-build).
+        </Tip>
+      </Step>
+
+      <Step title="Download from the plugin market">
+        Download the [Uni ECharts plugin](https://ext.dcloud.net.cn/plugin?id=22035) from the DCloud uni-app plugin market and import it into your project.
+
+        <Tip>
+          Uni ECharts supports [easycom](https://uniapp.dcloud.net.cn/component/#easycom). When using the uni-modules method, the `<uni-echarts>` component is available without any import statements.
+        </Tip>
+
+        <Warning>
+          The component's API functions still need to be imported manually. Note that the import path differs from the npm method.
+        </Warning>
+      </Step>
+
+      <Step title="Use the component">
+        Import `provideEcharts` from the uni-modules path (not from `uni-echarts/shared`).
+
+        <Note>
+          Since `2.0.0`, `provideEcharts` must be called manually even when using uni-modules. The component no longer auto-fills a default echarts instance.
+        </Note>
+
+        ```vue
+        <template>
+          <uni-echarts custom-class="chart" :option="option"></uni-echarts>
+        </template>
+
+        <script setup>
+        import { PieChart } from "echarts/charts";
+        import { DatasetComponent, LegendComponent, TooltipComponent } from "echarts/components";
+        import * as echarts from "echarts/core";
+        import { CanvasRenderer } from "echarts/renderers";
+        // Note: import path differs from npm method
+        import { provideEcharts } from "@/uni_modules/xiaohe-echarts";
+        import { ref } from "vue";
+
+        // Required since 2.0.0
+        provideEcharts(echarts);
+
+        echarts.use([
+          LegendComponent,
+          TooltipComponent,
+          DatasetComponent,
+          PieChart,
+          CanvasRenderer
+        ]);
+
+        const option = ref({
+          legend: { top: 10, left: "center" },
+          tooltip: { trigger: "item" },
+          series: [{ type: "pie", radius: ["30%", "52%"] }],
+          dataset: {
+            dimensions: ["Source", "Count"],
+            source: [["Search Engine", 1048], ["Direct", 735]]
+          }
+        });
+        </script>
+
+        <style>
+        .chart {
+          height: 300px;
+        }
+        </style>
+        ```
+
+        <Accordion title="Options API example">
+          ```vue
+          <template>
+            <uni-echarts custom-class="chart" :option="option"></uni-echarts>
+          </template>
+
+          <script>
+          import { PieChart } from "echarts/charts";
+          import { DatasetComponent, LegendComponent, TooltipComponent } from "echarts/components";
+          import * as echarts from "echarts/core";
+          import { CanvasRenderer } from "echarts/renderers";
+          import { defineComponent } from "vue";
+          import { ECHARTS_KEY } from "@/uni_modules/xiaohe-echarts";
+
+          echarts.use([LegendComponent, TooltipComponent, DatasetComponent, PieChart, CanvasRenderer]);
+
+          export default defineComponent({
+            provide: {
+              [ECHARTS_KEY]: echarts
+            },
+            data() {
+              return {
+                option: {
+                  legend: { top: 10, left: "center" },
+                  tooltip: { trigger: "item" },
+                  series: [{ type: "pie", radius: ["30%", "52%"] }],
+                  dataset: {
+                    dimensions: ["Source", "Count"],
+                    source: [["Search Engine", 1048], ["Direct", 735]]
+                  }
+                }
+              };
+            }
+          });
+          </script>
+
+          <style>
+          .chart { height: 300px; }
+          </style>
+          ```
+        </Accordion>
+
+        <Warning>
+          If your chart is not displaying on Mini Programs, check the [Mini Program class/style FAQ](/guide/faq#mini-program-class--style-attributes-are-not-working) for solutions.
+        </Warning>
+      </Step>
+    </Steps>
+
+  </Tab>
+</Tabs>

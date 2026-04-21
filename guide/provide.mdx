@@ -1,0 +1,84 @@
+---
+title: "Dependency injection with provide/inject"
+description: "Use Vue's provide/inject pattern to configure ECharts theme, options, and rendering settings globally across multiple chart components from a parent."
+---
+
+Uni ECharts uses Vue's [provide/inject](https://cn.vuejs.org/guide/components/provide-inject.html) pattern to let a parent component configure every `<uni-echarts>` instance in its subtree at once. Instead of threading the same props through each individual chart, you call a `provide*` function once and all descendant charts pick it up automatically.
+
+## Available provide functions
+
+| Function | What it configures |
+|---|---|
+| `provideEcharts` | The ECharts instance (used for custom builds) |
+| `provideEchartsTheme` | Chart theme (e.g. `"dark"`, a registered theme name, or a theme object) |
+| `provideEchartsOption` | Default `option` for all charts, or a targeted `option` for a specific chart |
+| `provideEchartsInitOptions` | Options passed to `echarts.init()` |
+| `provideEchartsUpdateOptions` | Options passed to `chart.setOption()` |
+| `provideEchartsLoadingOptions` | Loading indicator appearance |
+
+## Theme configuration
+
+Call `provideEchartsTheme` inside a component's `setup` to apply a theme to every `<uni-echarts>` rendered beneath it in the tree.
+
+<CodeGroup>
+
+```ts npm
+import { provideEchartsTheme } from "uni-echarts/shared";
+
+provideEchartsTheme("dark");
+```
+
+```ts uni-modules
+import { provideEchartsTheme } from "@/uni_modules/xiaohe-echarts";
+
+provideEchartsTheme("dark");
+```
+
+</CodeGroup>
+
+<Note>
+  All provide APIs accept a literal value, a `ref`, or a getter function. Uni ECharts resolves the value internally using [`toValue()`](https://cn.vuejs.org/api/reactivity-utilities.html#tovalue), so reactive values update all descendant charts automatically.
+</Note>
+
+## Option injection
+
+`provideEchartsOption` has two call signatures:
+
+- Pass only an `option` to set a default for **all** charts in the subtree (those without an `option-key` prop).
+- Pass a string key followed by an `option` to target **only** charts whose `option-key` prop matches that string.
+
+```vue
+<template>
+  <!-- Receives the option provided without a key -->
+  <uni-echarts></uni-echarts>
+
+  <!-- Receives the option provided with key "chart1" -->
+  <!-- Note: option-key is not reactive and does not support dynamic modification -->
+  <uni-echarts option-key="chart1"></uni-echarts>
+
+  <!-- Receives the option provided with key "chart2" -->
+  <uni-echarts option-key="chart2"></uni-echarts>
+</template>
+
+<script setup>
+// ⬇️ npm
+import { provideEchartsOption } from "uni-echarts/shared";
+// ⬇️ uni-modules
+// import { provideEchartsOption } from "@/uni_modules/xiaohe-echarts";
+import { ref } from "vue";
+
+const option = ref({
+  // ...
+});
+
+// Applies to all charts without an option-key
+provideEchartsOption(option);
+
+// Applies only to charts with option-key="chart1"
+provideEchartsOption("chart1", option);
+</script>
+```
+
+<Note>
+  `option-key` is not reactive. Setting it dynamically at runtime has no effect — assign a fixed string value in your template.
+</Note>

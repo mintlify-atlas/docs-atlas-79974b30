@@ -1,0 +1,150 @@
+---
+title: "Configuring ECharts in Uni ECharts"
+description: "Learn how to use on-demand imports, full imports, and custom ECharts builds to control bundle size in your uni-app mini program projects."
+---
+
+Mini programs enforce strict code size limits, so how you bring ECharts into your project has a direct impact on whether your app ships within budget. Uni ECharts supports three approaches: on-demand (tree-shaken) imports, a full import, and a custom build from the ECharts online builder.
+
+## On-demand imports
+
+Because mini programs have tight bundle size constraints, the recommended approach is to import only the charts and components you actually use. ECharts exposes individual modules from `echarts/charts`, `echarts/components`, and `echarts/renderers` that you can register with `echarts.use([...])`.
+
+The [Vue ECharts](https://github.com/ecomfe/vue-echarts) team provides an import code generator — paste your `option` object and it produces the exact list of imports you need. You can use it at [https://vue-echarts.dev/#codegen](https://vue-echarts.dev/#codegen).
+
+```js
+import * as echarts from "echarts/core";
+import { BarChart, LineChart } from "echarts/charts";
+import {
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  LegendComponent,
+} from "echarts/components";
+import { CanvasRenderer } from "echarts/renderers";
+
+echarts.use([
+  BarChart,
+  LineChart,
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  LegendComponent,
+  CanvasRenderer,
+]);
+```
+
+## Full import
+
+If you need every chart and component and are not concerned about bundle size, you can import the entire ECharts library:
+
+```js
+import "echarts";
+```
+
+## Custom ECharts build
+
+On-demand imports cover most cases, but sometimes you need a build that is tailored to a specific set of modules — for example when using ECharts extensions not available as separate npm packages. Uni ECharts supports custom builds via the `provideEcharts` API or the Vite plugin.
+
+<Steps>
+  <Step title="Download a custom build from the ECharts online builder">
+    Go to the [ECharts online builder](https://echarts.apache.org/zh/builder.html), select the modules you need, and download `echarts.min.js` to your local machine.
+  </Step>
+
+  <Step title="Convert the file to ESM format">
+    Vite requires ESM modules. Because the ECharts online builder only produces a UMD/IIFE bundle, Uni ECharts ships a CLI tool (`@uni-echarts/c2e`) that converts it.
+
+    <CodeGroup>
+
+    ```shell pnpm
+    pnpm dlx @uni-echarts/c2e@latest
+    ```
+
+    ```shell npm
+    npx @uni-echarts/c2e@latest
+    ```
+
+    </CodeGroup>
+
+    The interactive CLI will guide you through the conversion:
+
+    ```shell
+    ┌  Uni ECharts Transform CLI
+    │
+    ●  Transform input echarts.min.js to ESM
+    │
+    ◇  Input file
+    │  ./echarts.min.js
+    │
+    ◇  Output file
+    │  ./echarts.esm.js
+    │
+    ◇  Transform completed!
+    │
+    └  Output: /path/to/echarts.esm.js
+    ```
+
+    <Warning>
+      The converted ESM file does **not** support Tree-Shaking — unused code cannot be removed. It also requires a default import rather than a named import:
+
+      ```js
+      import echarts from "/path/to/echarts.esm.js";
+      ```
+
+      Support for Tree-Shaking in the converted output is planned for a future release.
+    </Warning>
+  </Step>
+
+  <Step title="Place the ESM file in your project">
+    Copy `echarts.esm.js` into your project source tree — for example, `src/plugins/echarts.esm.js` or `@/plugins/echarts.esm.js`.
+
+    **Do not place it in the `static` directory.** Mini programs only support ES5 in the `static` folder and cannot parse the `export` syntax used by ESM files.
+  </Step>
+
+  <Step title="Provide the custom ECharts instance">
+    Register the custom build so Uni ECharts components use it instead of the default.
+
+    <Tabs>
+      <Tab title="NPM — Vite plugin (recommended)">
+        Since `2.0.0`, the npm package exposes a Vite plugin option that handles the wiring for you:
+
+        ```js vite.config.js
+        import { UniEcharts } from "uni-echarts/vite";
+        import { defineConfig } from "vite";
+
+        export default defineConfig({
+          // ...
+          plugins: [
+            UniEcharts({
+              echarts: {
+                // Pass the actual path to your ESM file, e.g. "@/plugins/echarts.esm.js"
+                provide: "/path/to/echarts.esm.js",
+                importType: "default",
+              },
+            }),
+          ],
+        });
+        ```
+      </Tab>
+      <Tab title="NPM — manual">
+        You can also call `provideEcharts` directly in your app entry point:
+
+        ```js
+        import { provideEcharts } from "uni-echarts/shared";
+        import echarts from "/path/to/echarts.esm.js";
+
+        provideEcharts(echarts);
+        ```
+      </Tab>
+      <Tab title="Uni Modules">
+        With the uni-modules installation, call `provideEcharts` manually:
+
+        ```js
+        import { provideEcharts } from "@/uni_modules/xiaohe-echarts";
+        import echarts from "/path/to/echarts.esm.js";
+
+        provideEcharts(echarts);
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>

@@ -1,0 +1,71 @@
+---
+title: "Migrating from Uni ECharts v1 to v2"
+description: "A guide to the new features and breaking changes introduced in Uni ECharts v2, covering both the NPM and Uni Modules installation methods."
+---
+
+Uni ECharts v2 introduces a Vite plugin and a CLI tool for the NPM method, and removes the automatic `echarts/core` fallback to better support custom ECharts builds. This guide covers what changed and how to update your project.
+
+## NPM method — new features
+
+These additions are not breaking changes. Existing v1 projects using the NPM method will continue to work.
+
+### Vite plugin
+
+The NPM package now ships a Vite plugin that automates repetitive setup tasks:
+
+- Automatically calls `provideEcharts` so you no longer need to do it manually in your entry file.
+- Configures Vite's `optimizeDeps` to correctly resolve ECharts dependencies.
+- Supports custom ECharts builds, which also eliminates the duplicate `echarts/core` bundle that occurred in v1 on Mini Programs.
+
+### CLI tool (`@uni-echarts/c2e`)
+
+A CLI tool is available to convert an online-customized `echarts.min.js` file into ESM format, making it compatible with the Vite-based build pipeline.
+
+---
+
+## Uni Modules method — breaking changes
+
+<Warning>
+  If you are using Uni ECharts via Uni Modules, you must make the following change. The component no longer automatically provides `echarts/core` as the default ECharts instance. Failing to call `provideEcharts` manually will result in charts not rendering.
+</Warning>
+
+### Why this changed
+
+To support custom ECharts builds, the component no longer auto-fills `echarts/core` as the default `echarts` plugin. You must now supply the ECharts instance yourself via `provideEcharts`.
+
+### Migration steps
+
+<Steps>
+  <Step title="Import provideEcharts and your ECharts instance">
+    In your app entry file (e.g. `main.js` or `App.vue`), import both `echarts` and the `provideEcharts` function.
+
+    ```js
+    import * as echarts from "echarts/core";
+    import { provideEcharts } from "@/uni_modules/xiaohe-echarts";
+    ```
+  </Step>
+
+  <Step title="Call provideEcharts with your ECharts instance">
+    Call `provideEcharts` once, passing your ECharts instance. This makes the instance available to all `uni-echarts` components in your app.
+
+    ```js
+    provideEcharts(echarts);
+    ```
+  </Step>
+</Steps>
+
+### Options API alternative
+
+If you are using the Options API, you can provide the ECharts instance via Vue's `provide` option using the exported `ECHARTS_KEY` symbol.
+
+```js
+import * as echarts from "echarts/core";
+import { defineComponent } from "vue";
+import { ECHARTS_KEY } from "@/uni_modules/xiaohe-echarts";
+
+export default defineComponent({
+  provide: {
+    [ECHARTS_KEY]: echarts
+  }
+});
+```

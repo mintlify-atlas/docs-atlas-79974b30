@@ -1,0 +1,238 @@
+---
+title: "Basic chart usage with Uni ECharts"
+description: "Render your first ECharts chart in uni-app using the uni-echarts component with on-demand imports, reactive options, and cross-platform canvas support."
+---
+
+This example shows the minimal setup needed to render an ECharts chart with `<uni-echarts>`. You register only the ECharts modules your chart requires, call `provideEcharts` once at the app level, bind a reactive `option` object to the component, and the chart renders and resizes automatically.
+
+## Set up ECharts modules
+
+Before you use `<uni-echarts>`, register the chart types and components you need via `echarts.use`. Keeping this in a shared file lets every page re-use the same registration without duplication.
+
+<Tabs>
+  <Tab title="npm">
+    ```ts global.ts
+    // Import from the echarts package (npm install echarts)
+    import * as echarts from "echarts/core";
+    import { CanvasRenderer } from "echarts/renderers";
+    import {
+      DatasetComponent,
+      LegendComponent,
+      TooltipComponent
+    } from "echarts/components";
+    import { PieChart } from "echarts/charts";
+
+    echarts.use([
+      LegendComponent,
+      TooltipComponent,
+      DatasetComponent,
+      PieChart,
+      CanvasRenderer
+    ]);
+
+    export const GLOBAL_OPTION = {
+      textStyle: {
+        fontFamily: `Inter, "Helvetica Neue", Arial, sans-serif`
+      }
+    };
+    ```
+  </Tab>
+  <Tab title="uni-modules">
+    ```ts global.ts
+    // echarts is installed separately via npm (pnpm add echarts)
+    // and imported the same way as the npm method
+    import * as echarts from "echarts/core";
+    import { CanvasRenderer } from "echarts/renderers";
+    import {
+      DatasetComponent,
+      LegendComponent,
+      TooltipComponent
+    } from "echarts/components";
+    import { PieChart } from "echarts/charts";
+
+    echarts.use([
+      LegendComponent,
+      TooltipComponent,
+      DatasetComponent,
+      PieChart,
+      CanvasRenderer
+    ]);
+
+    export const GLOBAL_OPTION = {
+      textStyle: {
+        fontFamily: `Inter, "Helvetica Neue", Arial, sans-serif`
+      }
+    };
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  Always include `CanvasRenderer` — SVG rendering is not supported in uni-app Mini Program environments.
+</Note>
+
+## Page component
+
+```vue index.vue (script setup)
+<script lang="ts" setup>
+import type { PieSeriesOption } from "echarts/charts";
+import { PieChart } from "echarts/charts";
+import type {
+  DatasetComponentOption,
+  LegendComponentOption,
+  TooltipComponentOption
+} from "echarts/components";
+import {
+  DatasetComponent,
+  LegendComponent,
+  TooltipComponent
+} from "echarts/components";
+import type { ComposeOption } from "echarts/core";
+import * as echarts from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import { GLOBAL_OPTION } from "../echarts";
+
+type EChartsOption = ComposeOption<
+  | LegendComponentOption
+  | TooltipComponentOption
+  | DatasetComponentOption
+  | PieSeriesOption
+>;
+
+echarts.use([
+  LegendComponent,
+  TooltipComponent,
+  DatasetComponent,
+  PieChart,
+  CanvasRenderer
+]);
+
+const option = ref({
+  ...GLOBAL_OPTION,
+  legend: {
+    top: 10,
+    left: "center"
+  },
+  tooltip: {
+    trigger: "item",
+    textStyle: {
+      // #ifdef MP-WEIXIN
+      textShadowBlur: 1
+      // #endif
+    }
+  },
+  series: [
+    {
+      type: "pie",
+      radius: ["30%", "52%"],
+      label: {
+        show: false,
+        position: "center"
+      },
+      itemStyle: {
+        borderWidth: 2,
+        borderColor: "#ffffff",
+        borderRadius: 10
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 20
+        }
+      }
+    }
+  ],
+  dataset: {
+    dimensions: ["来源", "数量"],
+    source: [
+      ["Search Engine", 1048],
+      ["Direct", 735],
+      ["Email", 580],
+      ["Union Ads", 484],
+      ["Video Ads", 300]
+    ]
+  }
+} satisfies EChartsOption);
+</script>
+```
+
+```vue index.vue (template)
+<template>
+  <uni-echarts custom-class="h-75" :option="option" autoresize></uni-echarts>
+</template>
+```
+
+## Key points
+
+- **`ComposeOption`** — Use `ComposeOption` from `echarts/core` to build a strictly-typed option type from the specific chart and component option types you import. This catches misconfigured options at compile time.
+- **`echarts.use([...])`** — Register modules once per page (or in a shared setup file). Registering the same module multiple times is safe but unnecessary.
+- **`:option`** — Bind a reactive `ref` or `computed` value. When the ref changes, the chart re-renders automatically via `setOption`.
+- **`autoresize`** — Available on Web builds. Watches the component's container and calls `resize()` whenever its dimensions change. On Mini Program builds the component handles resize internally.
+- **`custom-class`** — Use `custom-class` instead of `class` on Mini Program targets where virtual host nodes ignore the standard `class` attribute. See the [FAQ](/guide/faq) for details.
+
+<Accordion title="Options API variant">
+```vue index.vue (Options API)
+<script lang="ts">
+import { defineComponent, ref } from "vue";
+import type { PieSeriesOption } from "echarts/charts";
+import { PieChart } from "echarts/charts";
+import type {
+  DatasetComponentOption,
+  LegendComponentOption,
+  TooltipComponentOption
+} from "echarts/components";
+import {
+  DatasetComponent,
+  LegendComponent,
+  TooltipComponent
+} from "echarts/components";
+import type { ComposeOption } from "echarts/core";
+import * as echarts from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+
+type EChartsOption = ComposeOption<
+  | LegendComponentOption
+  | TooltipComponentOption
+  | DatasetComponentOption
+  | PieSeriesOption
+>;
+
+echarts.use([
+  LegendComponent,
+  TooltipComponent,
+  DatasetComponent,
+  PieChart,
+  CanvasRenderer
+]);
+
+export default defineComponent({
+  setup() {
+    const option = ref({
+      legend: { top: 10, left: "center" },
+      tooltip: { trigger: "item" },
+      series: [{ type: "pie", radius: ["30%", "52%"] }],
+      dataset: {
+        dimensions: ["来源", "数量"],
+        source: [
+          ["Search Engine", 1048],
+          ["Direct", 735],
+          ["Email", 580]
+        ]
+      }
+    } satisfies EChartsOption);
+
+    return { option };
+  }
+});
+</script>
+
+<template>
+  <uni-echarts custom-class="h-75" :option="option" autoresize></uni-echarts>
+</template>
+```
+</Accordion>
+
+## Related
+
+- [Component props and exposes](/api/component) — Full reference for all `<uni-echarts>` attributes
+- [Provide functions](/api/functions) — Set global defaults with `provideEcharts` and `provideEchartsOption`
